@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>LabBooking PRD Validate Report</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:1000px;margin:0 auto;padding:32px;color:#1c1917;background:#fafaf9;line-height:1.6}h1{margin-bottom:4px}h2{margin-top:28px;border-bottom:1px solid #e7e5e4;padding-bottom:6px}.meta{color:#57534e;font-size:14px}.grade{display:inline-block;background:#d97706;color:white;border-radius:6px;padding:4px 10px;font-weight:700}.finding{background:white;border:1px solid #e7e5e4;border-left:4px solid #d97706;padding:12px 16px;margin:10px 0;border-radius:6px}.high{border-left-color:#dc2626}.medium{border-left-color:#ca8a04}.low{border-left-color:#64748b}.tag{font-size:12px;font-weight:700;text-transform:uppercase}.ok{color:#15803d}.warn{color:#b45309}.no{color:#b91c1c}table{border-collapse:collapse;width:100%;background:white}th,td{border:1px solid #e7e5e4;padding:8px;text-align:left;vertical-align:top}th{background:#f5f5f4}code{font-family:ui-monospace,monospace}
+</style>
+</head>
+<body>
+<h1>LabBooking PRD Validate Report</h1>
+<p class="meta">PRD: <code>_bmad-output/planning-artifacts/prds/prd-LabBooking-2026-11-12/prd.md</code><br>Run: 2026-11-14 Asia/Shanghai<br><span class="grade">Fair / 有条件通过</span></p>
+<h2>总体结果</h2>
+<p>PRD 已形成可进入 Architecture 和 Epic/Story 规划的需求骨架，未发现 Critical 缺陷或未经批准的功能扩张。组长已选择课程 MVP 的时段、业务时区、停用处理和 NFR 暂定目标；组长报告 A/B/C 已同意当前课程 MVP 基线，但独立确认凭据、实际使用者、测试负责人和教师证据仍不完整；本报告不等同于正式 GitHub Approve 或课程 M1 通过。</p>
+<p class="meta">本轮一致性校正：原汇总曾列 Medium 4；Rubric 已有独立 SM-03 Medium，原 Markdown/HTML 汇总漏列。本轮统一为 Medium 5；这是报告聚合修正，不是重新运行 Validate。</p>
+<p class="meta">过程时间线：PR #1 merge commit <code>a3fee51</code> 先于本报告 2026-11-14 的 BMAD PRD Validate；本轮只做证据措辞和报告一致性修正。</p>
+<h2>维度判断</h2>
+<table><tr><th>维度</th><th>判断</th><th>摘要</th></tr>
+<tr><td>Decision-readiness</td><td class="warn">thin</td><td>关键业务规则和批准状态未冻结。</td></tr>
+<tr><td>Substance over theater</td><td class="ok">strong</td><td>内容产品特定，NFR 有阈值。</td></tr>
+<tr><td>Strategic coherence</td><td>adequate</td><td>P0/P1/P2 对齐，SM-03 仍需口径。</td></tr>
+<tr><td>Done-ness clarity</td><td>adequate</td><td>FR 验收完整，下午结束边界待补。</td></tr>
+<tr><td>Scope honesty</td><td class="ok">strong</td><td>范围和非目标明确。</td></tr>
+<tr><td>Downstream usability</td><td>adequate</td><td>可拆 3 Epic/12 Story，NFR 追溯需补。</td></tr>
+<tr><td>Shape fit</td><td class="ok">strong</td><td>内部工具的能力规格形状合适。</td></tr></table>
+<h2>High</h2>
+<div class="finding high"><span class="tag">High</span> 课程实施值已由组长选择；组长报告 A/B/C 已同意，但独立确认凭据和实际使用者确认证据未闭环（PRD 126, 132-136；D-002/D-008）。13:30 是下午创建/取消截止；17:30 主要用于查询、展示和已结束判断，不是取消边界。</div>
+<div class="finding high"><span class="tag">High</span> Product Brief/PRD 均为 <code>draft</code>，D-001 至 D-010 多数待确认。合并提交不能替代正式批准。</div>
+<div class="finding high"><span class="tag">High</span> Decision Log 140-148 和 PRD memlog 记录了 A/B/C 反馈；组长报告三位队友已同意当前课程 MVP 基线，但准确 GitHub 评论链接、Review/Approve 状态和教师批准记录缺失。独立确认凭据待归档，不写成正式 Approve。</div>
+<h2>Medium (5)</h2>
+<div class="finding medium">SM-03 可测量性不足：自动判定 100% 尚未定义场景集合、分母、样本数和观察窗口（PRD §8 296）。</div>
+<div class="finding medium">下午 17:29:59/17:30:00 边界未形成查询、状态展示和“已结束”判断验收（PRD 136）；13:30 已是下午时段创建和取消的截止边界，不把下午结束时刻写成取消边界。</div>
+<div class="finding medium">NFR-01/NFR-02 规模和统计口径已由组长报告的 C 评审覆盖为暂定指标基线，但独立确认凭据、环境、工具、统计口径和执行仍待归档；组长选择的数值仍是测试计划暂定目标。</div>
+<div class="finding medium">NFR-03 尚未形成逐项禁止/合法场景配对矩阵和证据格式（PRD 260-264）。</div>
+<div class="finding medium">§11 对 NFR-02/NFR-03 到 Brief、Decision Log、SM 的直接追溯不完整。</div>
+<h2>M1 门槛</h2>
+<p><strong>文档质量验证：</strong>有条件通过。<br><strong>团队需求审核确认：</strong>组长报告 A/B/C 已同意，独立确认凭据待归档。<br><strong>课程 M1 正式通过：</strong>正式验收结论待核实，缺教师或课程系统记录及 M1 选题 Pitch 完成证据。</p>
+<h2>Architecture readiness</h2>
+<p>具备条件但不是无条件就绪。可开始识别唯一性、状态、权限和 NFR 约束；时间/时区/NFR 规模必须作为待验证输入，不得改写为 VERIFIED。</p>
+<p class="meta">本轮未运行业务代码、并发、性能或授权测试；未修改原 PRD、Product Brief、Decision Log 或 frontmatter 状态。</p>
+</body></html>
