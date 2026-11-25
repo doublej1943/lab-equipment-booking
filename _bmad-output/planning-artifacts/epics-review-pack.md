@@ -10,7 +10,7 @@ reviewStatus: pending
 
 # LabBooking Epics / Stories 三方审核包
 
-当前为**4个Epic、21个Story、98条AC、15 FR＋3 NFR的逐项设计追溯、11项开发准备清单**。三方已完成首轮文档评审，B于2026-11-25按意见修订并补Decision Log，修订待复核；未进入业务实现，不宣称依赖安装/环境复现/迁移/功能或NFR实测通过。
+当前为**4个Epic、21个Story、98条AC、15 FR＋3 NFR的逐项设计追溯、11项开发准备清单**。三方已完成首轮文档评审，B于2026-11-25按意见修订并补Decision Log。A已通过对 `8bacfa7` 的架构复核，C提出的一项验收依赖已修订，待C确认；需求负责人待最终确认；未进入业务实现，不宣称依赖安装/环境复现/迁移/功能或NFR实测通过。
 
 ## 建议阅读顺序
 
@@ -32,15 +32,15 @@ reviewStatus: pending
 | 审核者 | 要回答的问题 | 优先位置 | 本轮状态 |
 | --- | --- | --- | --- |
 | 需求负责人 | 15FR/3NFR覆盖、业务一致性、UJ/SM及合成资料边界 | 逐项追溯、Story AC、DP-03/08/10 | 已有条件认可拆分方向；本轮修订待复核 |
-| A | 已批准架构的一致性，分页和异常分类歧义 | 3.3-AC3、3.4-AC2、3.7-AC4及原约束 | 已完成首轮架构审查、未发现需重设架构；两项修改待复核 |
-| C | 测试/端到端可执行性、真实时间/故障及NFR证据 | 3.6～3.8、4.4/4.5、DP-05/07/09/10/11 | 已有条件认可并同意继续开发准备；本轮修订待复核 |
+| A | 已批准架构的一致性，分页和异常分类歧义 | 3.3-AC3、3.4-AC2、3.7-AC4及原约束 | [A已复核通过](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7154305778)，结论对应 `8bacfa7`，无新增架构阻断 |
+| C | 测试/端到端可执行性、真实时间/故障及NFR证据 | 3.6～3.8、4.4/4.5、DP-05/07/09/10/11 | [C已复核](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7158419208)，要求调整4.4-AC5与DP-10。B已修订，待C确认该项 |
 | B | 统一修订与决策补录，随后落实实现/环境/测试支持 | 五份文档及后续代码 | 文档修订已准备，实施待开展 |
 
 上述结论按真实评论原文记录，GitHub正式Review记录为COMMENTED，不改写成APPROVED。修订待原审核者复核，行内线程不由本稿宣称已关闭；文档认可不替代开发、C执行结果或系统验收。
 
 ## PR #4 真实评审与逐项处理（2026-11-25）
 
-三方意见发生于2026-11-23（Asia/Shanghai），本次补录不倒填为2026-11-22。以下“已修订”只指文档修改，不代表审核者已复核或对应测试已通过。
+首轮三方意见发生于2026-11-23（Asia/Shanghai），本次补录不倒填为2026-11-22。以下“已修订”只指文档修改，不代表审核者已复核或对应测试已通过。
 
 | 项目/来源 | B本轮处理与位置 | 状态/后续门槛 |
 | --- | --- | --- |
@@ -49,8 +49,8 @@ reviewStatus: pending
 | R-03：[需求负责人第3项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080) | 优先级建议改为先完成登录到本人取消的3.1～3.5核心闭环，管理/NFR/实验A保留容量，硬依赖和验收范围保持；D-039 | 已修订，Sprint容量/排期仍待Planning |
 | R-04：[需求负责人第4项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080) | DP-03明确课程演示/一般开发/自动化可用符合约束的合成资料，仅真实导入需要私有真实资料；D-045 | 使用边界已澄清，合成数据/工具待实现 |
 | R-05：[需求负责人第5项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080) | 3.5-AC4及DP-04明确Booking共八字段、取消只改status、其余七不变；核对既有字段契约，不新增独立架构决策 | 已修订，待复核 |
-| R-06：[A第1项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611) | 3.4-AC2明确page无100上限、仅page_size为1～100；page=101仍是合法页；D-040 | 已修订，待A/C复核 |
-| R-07：[A第2项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611) | 3.3-AC3、3.7-AC4和DP-07将D-015限定收窄为数据库异常转换，允许业务冲突预检查，最终唯一性不变；D-041 | 已修订，待A/C复核 |
+| R-06：[A第1项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611) | 3.4-AC2明确page无100上限、仅page_size为1～100；page=101仍是合法页；D-040 | 已修订，A已于11月25日复核通过 |
+| R-07：[A第2项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611) | 3.3-AC3、3.7-AC4和DP-07将D-015限定收窄为数据库异常转换，允许业务冲突预检查，最终唯一性不变；D-041 | 已修订，A已于11月25日复核通过 |
 | R-08：[C时间意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662618779) | 新增3.6-AC9正向验证时间资格已满足、后续提交跨开始不被新增截止拒绝；DP-07/追溯同步；D-044 | 已修订，两层时间/真实PG证据待执行 |
 | R-09：[C性能口径意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662621179) | 保留4.5及DP-09/10正式前冻结、完整响应/本人区、全部样本/正确性、任一错误失败，不填未经实测数值 | 原要求保留，计划/环境/执行待落实 |
 | R-10：[C逐入口授权意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662627373) | 4.4-AC5及DP-10逐入口列身份/目标/CSRF/HTTP/数据变化，保留合法配对和CSRF分测 | 已细化，实际矩阵/执行待C完成 |
@@ -88,7 +88,7 @@ reviewStatus: pending
 | 开发准备条目 | DP-01～11共11项，责任/门槛/当前未落实状态已列 |
 | 用户旅程/成功指标/端到端追溯 | UJ-1～4、SM-01～03和E2E-01～06均有现有Story/AC落点 |
 | 阶段日志编号与历史保护 | 新增D-039～D-045七项，D-001～D-038及原附录按原文保留 |
-| 本地文件链接及显式锚点 | 四份规划文档与日志新增部分共78处有效；9条评审评论永久链接与已读取PR证据对应 |
+| 本地文件链接及显式锚点 | 四份规划文档与日志新增部分共78处有效；11条评审评论永久链接与已读取PR证据对应 |
 | UTF-8、隐藏/替换字符、模板残留、代码围栏 | 未发现异常；Route中的id占位使用代码格式避免被当HTML |
 | Git差异范围及空白 | 相对首轮仅修订四份规划文件并追加Decision Log；PRD及其余架构文件未修改，diff空白检查通过 |
 
