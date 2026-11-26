@@ -1,0 +1,35 @@
+name: Story 1.1 Windows verification
+on:
+  push:
+    branches: [verify/story-1-1-windows]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Restore locked Windows environment and verify
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = $env:RUNNER_TEMP
+          $m = Join-Path $root 'micromamba.exe'
+          $zip = Join-Path $root 'edb.zip'
+          curl.exe -fsSL --retry 3 -o $m https://github.com/mamba-org/micromamba-releases/releases/download/2.10.0-0/micromamba-win-64.exe
+          if ($LASTEXITCODE -ne 0 -or (Get-FileHash $m).Hash -ne 'f8b4284bd4eb1134122eaf93b3ea6c7be567e596de5829e1a6f478e34e41974a') { throw 'Micromamba download mismatch' }
+          $env:MAMBA_ROOT_PREFIX = Join-Path $root 'mamba'
+          & $m create -y -n labbooking -f conda-win-64.lock
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          curl.exe -fsSL --retry 3 -o $zip https://get.enterprisedb.com/postgresql/postgresql-17.12-2-windows-x64-binaries.zip
+          if ($LASTEXITCODE -ne 0 -or (Get-FileHash $zip).Hash -ne '520c8c6f19abb3b31fa83ec5e486e2f769eedd7593d94e60a7cda8a5bfb4df91') { throw 'PostgreSQL download mismatch' }
+          tar.exe -xf $zip -C $root pgsql/bin pgsql/lib pgsql/share
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:LABBOOKING_PG_BIN = Join-Path $root 'pgsql/bin'
+          & $m run -n labbooking python -m tools.verify_runtime
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $m run -n labbooking python -m pytest -q tests/test_app_foundation.py
+          exit $LASTEXITCODE
