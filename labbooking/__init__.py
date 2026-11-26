@@ -18,7 +18,7 @@ def create_app(config=None):
     app.config.from_mapping(flask_settings(config))
     app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax",
                       PERMANENT_SESSION_LIFETIME=timedelta(hours=2), SESSION_REFRESH_EACH_REQUEST=False,
-                      WTF_CSRF_TIME_LIMIT=timedelta(hours=2))
+                      WTF_CSRF_TIME_LIMIT=7200)
     db.init_app(app)
     with app.app_context():
         validate_database(db.engine, application_role=True)
