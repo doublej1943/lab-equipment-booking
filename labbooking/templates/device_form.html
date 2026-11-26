@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}设备资料{% endblock %}
+{% block content %}<section class="panel form-panel"><h1>{{ '编辑设备' if device else '新增设备' }}</h1>
+<form method="post" class="stack" action="{{ url_for('devices.edit',device_id=device.id) if device else url_for('devices.create') }}">{{ token() }}
+{% if device %}<p>设备编号 <strong>{{ device.code }}</strong></p>{% else %}<label>设备编号<input name="code" required maxlength="64"></label>{% endif %}
+<label>设备名称<input name="name" value="{{ device.name if device else '' }}" required maxlength="128"></label>
+<label>位置<input name="location" value="{{ device.location if device else '' }}" required maxlength="128"></label>
+{% if not device %}<label>状态<select name="status"><option value="Available">可用</option><option value="Disabled">停用</option></select></label>{% endif %}
+<button>保存设备</button></form></section>{% endblock %}

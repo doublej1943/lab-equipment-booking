@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block title %}设备目录{% endblock %}
+{% block content %}<div class="heading"><h1>设备目录</h1>{% if role=='admin' %}<a class="button" href="{{ url_for('devices.new') }}">新增设备</a>{% endif %}</div>
+<section class="account" aria-label="当前账号"><strong>当前账号</strong> {{ account.username }} <span>{{ account.phone }}</span></section>
+<div class="panel scroll"><table><thead><tr><th>设备</th><th>位置</th><th>状态</th><th>操作</th></tr></thead><tbody>
+{% for d in rows %}<tr><td><strong>{{ d.name }}</strong><small>{{ d.code }}</small></td><td>{{ d.location }}</td><td>{{ state(d.status) }}</td><td><div class="actions">
+<a href="{{ url_for('bookings.availability', device_id=d.id, date=today) }}">查看时段</a>
+{% if role=='admin' %}<small>设备 ID {{ d.id }}</small><a href="{{ url_for('devices.edit',device_id=d.id) }}">编辑</a>
+<form method="post" action="{{ url_for('devices.toggle',device_id=d.id,enabled=d.status=='Disabled') }}">{{ token() }}<button class="link">{{ '启用' if d.status=='Disabled' else '停用' }}</button></form>
+{% if d.status=='Disabled' %}<a href="{{ url_for('bookings.affected',device_id=d.id) }}">受影响预约</a>{% endif %}{% endif %}</div></td></tr>
+{% else %}<tr><td colspan="4">暂无设备。</td></tr>{% endfor %}</tbody></table></div>{% endblock %}

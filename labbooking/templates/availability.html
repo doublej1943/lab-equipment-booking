@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}预约时段{% endblock %}
+{% block content %}<h1>{{ device.name }}</h1><p>{{ device.code }} · {{ device.location }} · {{ state(device.status) }}</p>
+<form class="filters" method="get"><label>预约日期<input type="date" name="date" value="{{ day }}" required></label><button>查询时段</button></form>
+<div class="slots">{% for s in slots %}<article class="panel"><h2>{{ '上午' if s.slot=='AM' else '下午' }} · {{ s.slot }}</h2>
+<p>{{ s.start.strftime('%H:%M') }} – {{ s.end.strftime('%H:%M') }}</p><p>{{ s.state }}</p>
+{% if role=='user' and s.state=='可预约' %}<form method="post" action="{{ url_for('bookings.create') }}">{{ token() }}
+<input type="hidden" name="device_id" value="{{ device.id }}"><input type="hidden" name="booking_date" value="{{ day }}"><input type="hidden" name="slot" value="{{ s.slot }}"><button>预约{{ '上午' if s.slot=='AM' else '下午' }}</button></form>{% endif %}
+</article>{% endfor %}</div>{% endblock %}
