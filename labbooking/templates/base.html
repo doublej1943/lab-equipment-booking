@@ -1,0 +1,11 @@
+{% macro token() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+{% macro state(value) %}<span class="state {{ value }}">{{ {'Available':'可用','Disabled':'设备已停用','Confirmed':'已确认','Cancelled':'已取消'}[value] }}</span>{% endmacro %}
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}LabBooking{% endblock %} · 实验室设备预约</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head>
+<body><header><div class="bar"><a class="brand" href="{{ url_for('devices.catalog') }}"><img src="{{ url_for('static', filename='flask-conical.svg') }}" alt="">LabBooking</a>
+{% if role %}<nav><a href="{{ url_for('devices.catalog') }}">设备目录</a>
+{% if role == 'admin' %}<a href="{{ url_for('bookings.all_bookings') }}">全部预约</a>{% else %}<a href="{{ url_for('bookings.mine') }}">我的预约</a>{% endif %}
+<form method="post" action="{{ url_for('auth.logout') }}">{{ token() }}<button class="link">退出</button></form></nav>{% endif %}</div></header>
+<main>{% for message in get_flashed_messages() %}<p role="status" class="notice">{{ message }}</p>{% endfor %}{% block content %}{% endblock %}</main></body></html>

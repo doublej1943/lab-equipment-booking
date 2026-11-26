@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}{{ title }}{% endblock %}
+{% block content %}<h1>{{ title }}</h1>
+{% if device %}<p>{{ device.name }} · {{ device.code }} · {{ state(device.status) }}</p>
+{% elif admin_filters %}<form method="get" class="filters" id="filters"><label>开始日期<input type="date" name="date_from" value="{{ filters.get('date_from','') }}"></label>
+<label>结束日期<input type="date" name="date_to" value="{{ filters.get('date_to','') }}"></label>
+<label>设备 ID<input name="device_id" type="number" min="1" value="{{ filters.get('device_id','') }}"></label>
+<label>状态<select name="status"><option value="">全部</option>{% for key, label in [('Confirmed','已确认'),('Cancelled','已取消')] %}<option value="{{ key }}" {% if filters.get('status')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><button>筛选</button><a href="{{ url_for('bookings.all_bookings') }}">重置</a></form>
+<script>document.querySelector('#filters').addEventListener('formdata', event => {for (const [key,value] of [...event.formData]) if (!value) event.formData.delete(key)})</script>
+{% else %}<nav class="filters"><a href="{{ url_for('bookings.mine') }}">完整历史</a><a href="{{ url_for('bookings.mine',status='Confirmed') }}">仅已确认</a></nav>{% endif %}
+<div class="panel scroll"><table><thead><tr><th>设备</th><th>日期 / 时段</th><th>预约状态</th>{% if role=='admin' %}<th>预约人</th>{% endif %}<th>详情</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ r.name }}<small>{{ r.code }} · {{ r.location }}{% if r.device_status=='Disabled' %} · 设备已停用{% endif %}</small></td>
+<td>{{ r.booking_date }} · {{ r.slot }}</td><td>{{ state(r.status) }}{% if r.ended %}<small>时段已结束</small>{% endif %}</td>
+{% if role=='admin' %}<td>{{ r.username }}</td>{% endif %}
+<td><a href="{{ url_for('bookings.coordination' if role=='admin' else 'bookings.detail',booking_id=r.id) }}">{{ '协调详情' if role=='admin' else '查看详情' }}</a></td></tr>
+{% else %}<tr><td colspan="5">暂无符合条件的预约。</td></tr>{% endfor %}</tbody></table></div>
+<nav class="filters">{% if previous %}<a href="{{ previous }}">上一页</a>{% endif %}{% if following %}<a href="{{ following }}">下一页</a>{% endif %}</nav>{% endblock %}
