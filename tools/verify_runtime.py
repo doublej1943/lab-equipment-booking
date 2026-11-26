@@ -2,6 +2,7 @@
 
 import json
 import os
+import csv
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -63,6 +64,11 @@ def temporary_postgres_cluster():
     pg_bin = Path(os.environ["LABBOOKING_PG_BIN"]).resolve(strict=True)
     with TemporaryDirectory(prefix="labbooking-dp01-") as directory:
         base = Path(directory)
+        # Elevated Windows users can create an Administrators-owned temp directory.
+        # PostgreSQL runs initdb with a restricted token for the same user.
+        identity = run(["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, check=True)
+        _, sid = next(csv.reader([identity.stdout.decode("oem").strip()]))
+        run(["icacls", directory, "/grant", f"*{sid}:(OI)(CI)F"], check=True, capture_output=True)
         data = str(base / "data")
         secret_file = base / "init.pw"
         admin_secret = token_urlsafe(32)
