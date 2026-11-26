@@ -1,7 +1,7 @@
-name: Story 1.1 Windows verification
+name: Four-epic Windows self-test
 on:
   push:
-    branches: [verify/story-1-1-windows]
+    branches: [verify/epics-windows]
 permissions:
   contents: read
 jobs:
@@ -14,6 +14,8 @@ jobs:
           persist-credentials: false
       - name: Restore locked Windows environment and verify
         shell: pwsh
+        env:
+          LABBOOKING_EVIDENCE_DIR: ${{ runner.temp }}/evidence
         run: |
           $ErrorActionPreference = 'Stop'
           $root = $env:RUNNER_TEMP
@@ -31,5 +33,13 @@ jobs:
           $env:LABBOOKING_PG_BIN = Join-Path $root 'pgsql/bin'
           & $m run -n labbooking python -m tools.verify_runtime
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $m run -n labbooking python -m pytest -q tests/test_app_foundation.py
+          & $m run -n labbooking python -m pytest -q tests --tb=short
           exit $LASTEXITCODE
+
+      - name: Preserve self-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: booking-evidence
+          path: ${{ runner.temp }}/evidence
+          if-no-files-found: ignore
