@@ -29,8 +29,9 @@ class Occupied(Conflict):
 
 
 class UnknownCommit(BusinessError):
-    def __init__(self, message, booking_id=None):
+    def __init__(self, message, recovery, booking_id=None):
         super().__init__(message)
+        self.recovery = recovery
         self.booking_id = booking_id
 
 
@@ -42,7 +43,7 @@ def temporary_failure(error):
 
 
 @contextmanager
-def write_transaction(unknown_message, *, booking_id=None, unique_name=None, conflict=None):
+def write_transaction(unknown_message, *, recovery="devices.catalog", booking_id=None, unique_name=None, conflict=None):
     committing = False
     try:
         yield
@@ -62,7 +63,7 @@ def write_transaction(unknown_message, *, booking_id=None, unique_name=None, con
                                     or code in {"40003", "57P01", "57P02"})
         db.session.rollback()
         if uncertain:
-            raise UnknownCommit(unknown_message, booking_id) from None
+            raise UnknownCommit(unknown_message, recovery, booking_id) from None
         raise
     except Exception:
         db.session.rollback()

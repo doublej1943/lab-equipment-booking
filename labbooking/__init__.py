@@ -41,17 +41,14 @@ def create_app(config=None):
         recovery = None
         if isinstance(error, UnknownCommit):
             status = 503
-            if error.booking_id is not None:
-                recovery = url_for("bookings.detail", booking_id=error.booking_id)
-            elif "预约" in str(error):
-                recovery = url_for("bookings.mine")
-            else:
-                recovery = url_for("devices.catalog")
+            params = {"booking_id": error.booking_id} if error.booking_id is not None else {}
+            recovery = url_for(error.recovery, **params)
         elif isinstance(error, Conflict):
             status = 409
         else:
             status = {Invalid: 400, Forbidden: 403, Missing: 404}[type(error)]
-        return render_template("error.html", message=str(error), recovery=recovery), status
+        return render_template("error.html", message=str(error), recovery=recovery,
+                               show_history=isinstance(error, UnknownCommit) and error.booking_id is not None), status
 
     @app.errorhandler(SQLAlchemyError)
     def database_error(error):

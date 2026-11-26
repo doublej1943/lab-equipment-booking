@@ -41,7 +41,7 @@ def availability(actor, device_id, day):
 def create(actor, device_id, day, slot):
     actor.require("user")
     start, end = snapshot(day, slot)
-    with write_transaction("预约结果尚未确认，请先查看本人预约记录核实。",
+    with write_transaction("预约结果尚未确认，请先查看本人预约记录核实。", recovery="bookings.mine",
                            unique_name="uq_bookings_confirmed_slot",
                            conflict=Occupied(f"设备 #{device_id} 在 {day} 的 {slot} 时段已被预约。")):
         device = device_row(device_id, lock=True)
@@ -56,7 +56,7 @@ def create(actor, device_id, day, slot):
 
 def cancel(actor, booking_id):
     actor.require("user")
-    with write_transaction("取消结果尚未确认，请查看本人预约详情核实。", booking_id=booking_id):
+    with write_transaction("取消结果尚未确认，请先查看该预约详情核实。", recovery="bookings.detail", booking_id=booking_id):
         row = db.session.execute(select(Booking.status, Booking.start_at).where(
             Booking.id == booking_id, Booking.user_id == actor.id).with_for_update()).first()
         if row is None:
