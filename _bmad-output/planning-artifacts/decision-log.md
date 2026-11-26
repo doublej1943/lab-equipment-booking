@@ -857,3 +857,118 @@
 - Architecture 负责人 A 应决定：数据库唯一性约束、事务/锁/并发保护、幂等策略、业务时钟注入与时区配置、HTTP 状态码和错误契约、权限中间件/资源所有权模型、设备唯一标识的存储约束、查询分页与性能实现。上述技术决策不应在本日志中事后伪造为已决定。
 - 本地证据审计未发现独立 Architecture 文档、ADR、Epic 或 Story；因此没有可纳入本日志的后续架构真实决策。
 - 仍由产品/团队确认：真实实验室时段和业务时区、停用设备线下协调是否适用、Product Brief/PRD 正式状态、独立决策的团队确认，以及课程 M1/Pitch 证据。
+
+<a id="epics-review-2026-11-25"></a>
+
+## Epics / Stories 阶段补录与 PR #4 评审修订（2026-11-25）
+
+本节在原D-001～D-038及来源附录之后追加，不改写旧记录的日期、状态、统计或证据。旧附录中“未发现Architecture/Epic”等为其注明的2026-11-16历史审计结论；本节记录之后实际发生的阶段交接与评审。
+
+- 需求/架构基线：main的`b97ec56d6d4d832abcdbcdbd4c987082ed750725`、已合并[PR #3](https://github.com/doublej1943/lab-equipment-booking/pull/3)。本阶段[PR #4](https://github.com/doublej1943/lab-equipment-booking/pull/4)首轮被审阅初稿为`3515fc14c4abef6b4dc50664209fc918ddf94bb4`，由B在本次Codex会话生成、以YANJIE-C提交；Git提交作者身份与AI生成来源是不同证据，不互相代替。
+- 人工来源：[需求负责人doublej1943](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080)、[A：lyl620756-debug](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611)、[C：znz776625总评](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7093949538)及下列行内意见。三方意见发生于2026-11-23（Asia/Shanghai）；2026-11-25由B核查并补录，不倒填人工评审日期。
+- 证据口径：以下AI初稿摘录均可在固定提交3515fc1查到，人工意见有GitHub永久链接，实际修订见本PR相对该提交的差异及各条本地落点。本次会话未另行导出到仓库；不伪造聊天截图、未发生的备选讨论或逐项最终批准。
+- 状态口径：需求负责人/C有条件认可拆分方向，A认为整体符合架构并要求修订后复核；C正式Review记录为COMMENTED。B已修订文档、待原审核者复核，不等于APPROVED、M2 Gate或实现/NFR通过。精确版本、scrypt、资源/故障机制及测试计划仍按DP门槛落实。
+- 记录与计数：D-039～D-045是阶段取舍、实施澄清和验收设计修订记录，非七项新的架构决定；继承既有业务/技术约束的不重复算新决定。本节提供“原稿—人工意见—修订”链，不因增加编号自动增加课程AI否决/实质修改计数，亦不改历史来源附录的统计。
+- 同轮字段表述核对：按需求负责人第5项，在3.5-AC4和DP-04明确Booking总共八字段、取消仅改status、其余七字段不变；这是D-013/014/015和既有八字段契约的重申，不另造字段或独立决策编号。
+
+<a id="d-039"></a>
+
+## D-039
+
+- 日期与阶段：初稿2026-11-22，人工评审2026-11-23，补录/修订2026-11-25；Epics / Stories。
+- 主题：沿用四个用户价值Epic和21个Story，按评审最小修订并优先核心业务闭环。
+- 背景与AI实际建议：B/Codex初稿将15FR/3NFR拆为4个Epic、21个Story，并列97条AC及11项准备门槛；原实施顺序建议先完成E1/E2与创建，再完成本人取消和管理查询。原稿见[3515fc1的epics.md](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md)。
+- 人工意见/决定：需求负责人认为方向合理、未见明显核心遗漏或超出MVP，要求完善后有条件认可；A认为4/21符合架构、无须重设计但先改两处歧义；C有条件认可并同意继续开发准备。需求负责人第3项建议优先可运行核心闭环，并为管理员、并发/NFR及实验A留容量。
+- B落实与取舍：保留4/21，不重新生成需求或增加产品模块；优先E1、必要设备资料及3.1～3.5登录到本人取消闭环，管理员后续功能、真实PG竞争、故障、正式NFR与实验A留容量。顺序依硬依赖执行，不把文档章节顺序当必须先做完全部E2；不以排期降低指标。
+- 结果与落点：[epics.md](epics.md)实施建议/依赖表；[审核包](epics-review-pack.md)三方意见及逐项处理。新增一条既有时间规则的测试AC后现为98条AC，不新增Story。
+- 关联：全部15FR/3NFR、UJ-1～4、SM-01～03；继承原Architecture和D-030的执行边界。
+- 验证与待办：B/C按DP提供环境、迁移、测试支持及计划；Sprint容量/排期尚未冻结，适用DP门槛不可跳过，所有运行/功能/NFR验证待执行。
+- 状态与证据：首轮方向有条件认可，B修订待复核。证据为本节三条真实总评，非GitHub APPROVED或系统验收；属于采纳并调整AI拆分，不记录为人工否决架构方案。
+
+<a id="d-040"></a>
+
+## D-040
+
+- 日期与阶段：A评审2026-11-23，B修订/补录2026-11-25；Epic验收条件歧义修正。
+- 主题：分页100上限仅约束page_size，page保持正整数且无该上限。
+- AI初稿原文：3.4-AC2写“page=1/page_size=20默认、1～100合法、非正/非整数/超限400”，未明确1～100仅指page_size；可造成实现/测试误限page。见[原AC](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L361)。
+- 人工意见/决定：[A第1项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611)要求page不新增100上限、合法越界200空；[C总评第1项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7093949538)同意并按对应边界验证。
+- B落实与取舍：将page/page_size分别表达，明确page=101合法、实际超结果集时200空；page_size=101为400。保留R-70既定默认/正整数规则，不新增页码上限，不用静默截断。DP-08空串/重复等B拟定细节仍待确认，不因本项而视为批准。
+- 结果与落点：[3.4-AC2](epics.md#s-3-4)、DP-08及审核包R-06；排序/授权和LIMIT/OFFSET不变。
+- 关联：FR-BOOK-04、FR-ADM-01/02，R-62/70；本条澄清既有契约，不重新作分页架构决定。
+- 验证与状态：C后续分别验证page=101合法有数据/合法空页、page_size的1/100/101及两者非法值；当前仅文档已修订、待A/C复核，尚未实现或运行测试。
+- 证据分类：有固定初稿原文、人工纠正、具体修订位置；不将编号新增自动计作新的独立业务决定或已核实课程AI计分。
+
+<a id="d-041"></a>
+
+## D-041
+
+- 日期与阶段：A评审2026-11-23，B修订/补录2026-11-25；冲突处理AC澄清。
+- 主题：区分业务冲突预检查与D-015数据库异常转换，唯一索引仍为最终并发保障。
+- AI初稿原文：3.3-AC3写“仅D-015目标索引唯一违反在回滚后转换为预约冲突409”；3.7-AC4写“只有目标索引唯一违反回滚后转预约冲突409”。原措辞可能把数据库异常转换限定误读为禁止Service预检查。见[原3.3-AC3](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L341)、[原3.7-AC4](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L426)。
+- 人工意见/决定：[A第2项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7092039611)明确限定仅针对具体数据库异常转换，不禁止Service预约冲突预检查；C总评第1项同意。
+- B落实与取舍：允许Service按既有授权/业务规则做预检查并拒绝冲突；发生数据库异常时，只有D-015目标唯一索引具体违反在回滚后转预约冲突。其他唯一/FK/CHECK、技术故障和未知保持独立分类，预检查不替代最终唯一性、ADR-004/005或提交协议，不增加自动重试。
+- 结果与落点：[3.3-AC3](epics.md#s-3-3)、[3.7-AC4](epics.md#s-3-7)、DP-07及需求追溯FR-BOOK-03；安全提示和19次正常冲突的判定保持原要求。
+- 关联：FR-BOOK-03、NFR-01，D-015/018/019/021、AD-4/5/6/7。
+- 验证与状态：C区分业务预检查拒绝、目标索引违反、其他约束和技术故障的结果及终态；正式并发仍需真实竞争证据。当前文档已修订、待A/C复核，未进行实现或验证。
+- 证据分类：对AI产物实施歧义的人工纠正，不是换锁方案或重新选择最终一致性机制；不重复计已有架构决定。
+
+<a id="d-042"></a>
+
+## D-042
+
+- 日期与阶段：需求负责人/C评审2026-11-23，B修订/补录2026-11-25；需求到验收追溯。
+- 主题：纠正SM-02与设备列表性能的错误关联，补齐UJ与SM到现有AC的端到端验证。
+- AI初稿与问题：4.5“需求/架构”将SM-02列在设备列表性能Story中；原追溯表只列FR/NFR与Route，未列UJ-1～4、SM-01～03及核心闭环。见[原4.5关联](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L535)。PRD的SM-02实际是核心预约流程完整性，不是P95性能指标。
+- 人工意见/决定：[需求负责人第1项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080)要求补UJ/SM和端到端验收、无需新Story；[C行内意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662609525)指出SM-02错误并要求登录/查询/创建/查看/取消/冲突/越权完整验证。
+- B落实与取舍：4.5仅承担NFR-02/FR-DEV-01；在现有4.4-AC5复用各Story做核心流程回归，新增E2E-01～06场景编号及4UJ/3SM映射，不新增产品需求或Story。SM-02按预冻结核心场景通过数/总数目标100%；SM-03按预冻结正常/冲突集合正确自动判定覆盖目标100%，不能事后删失败或声称已证明实际节省工时。
+- 结果与落点：[追溯表UJ/SM](requirements-traceability.md#journeys-and-metrics)、[端到端场景](requirements-traceability.md#e2e-core-cases)、4.4-AC5、4.5需求关联及DP-10。正式NFR指标不变，产品流程/授权/P95分别判定。
+- 关联：PRD UJ-1～4、SM-01～03、全部原FR/NFR；D-036/037/038的严格判定原则保留。
+- 验证与状态：C冻结细化用例、场景集合/分母及证据格式后执行；每步有原请求/响应和数据终态，禁止汇总“E2E通过”掩盖漏测。当前文档修订待需求负责人/C复核，无测试结果。
+- 证据分类：可定位的AI错误关联与缺项，经真实人工评审纠正/补充；是否满足课程AI实质修改计分另按课程审核，不把相同意见在两位审阅者处重复计数。
+
+<a id="d-043"></a>
+
+## D-043
+
+- 日期与阶段：需求负责人/C评审2026-11-23，B修订/补录2026-11-25；提交未知的用户反馈与核查验收。
+- 主题：结果未知时明确提示并通过现有本人列表/详情核实，页面不自动重发原POST。
+- AI初稿原文：3.7-AC2为“原POST503明确结果未知/先查询”，AC3为“原POST503独立未知表达”；已有技术分类但未把用户查询入口和实际查询断言写具体。见[原AC2/3](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L424)。
+- 人工意见/决定：[需求负责人第2项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080)要求可见提示与后续核查，避免误报或引导重复提交；[C行内意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662616250)要求现有本人列表或详情入口、反映已提交状态且不自动重发。
+- B落实与取舍：创建503明确“预约结果尚未确认”并提供GET /bookings；取消503明确“取消结果尚未确认”并提供已有本人详情/列表GET。核对实际已提交Confirmed/Cancelled及独立PG终态，不误报成功/确定失败或引导重复操作。复用既定入口，无新查询API、后台补偿或自动重试。
+- 结果与落点：[3.7-AC2/3/5](epics.md#s-3-7)、DP-07、E2E-05；状态七字段/快照及提交未知语义保持原架构。
+- 关联：FR-BOOK-02/04/05/06、NFR-03；D-018/021/022/028及共用故障验证原则。
+- 验证与状态：B/C仍须明确真实确认丢失的注入点/机制；成功提交后抛应用异常只验证模拟范围，不能关闭真实场景。记录原POST、页面GET核查和独立连接终态，当前为文档已修订、待复核/执行。
+- 证据分类：对AI初稿验收粒度的人工作用有来源，未改变既有HTTP503、事务或禁止重试的架构决定。
+
+<a id="d-044"></a>
+
+## D-044
+
+- 日期与阶段：C评审2026-11-23，B修订/补录2026-11-25；时间与真实PG顺序的正向回归。
+- 主题：时间资格检查已满足后，提交跨开始时刻不增加额外截止条件。
+- AI初稿与缺项：原3.6-AC4覆盖必要行锁等待跨start_at后的拒绝，以及可控小于/等于/大于；DP-07已禁止增加提交截止，但未为“已满足检查、后续提交跨界”单列正向AC。见[原AC4](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/epics.md#L403)。
+- 人工意见/决定：[C行内意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#discussion_r4662618779)及总评第2项要求补该正向回归，并继续保留可控时间与真实PG两层、锁/取时顺序及独立终态证据。
+- B落实与取舍：追加3.6-AC9，创建/取消取得必要锁并单独clock_timestamp()得到check_time<start_at且其他资格满足后，正常提交跨start_at不额外拒绝；正常确认才报成功，状态分别Confirmed/Cancelled。与等待后取时已达开始而应拒绝的AC4并存，不放宽后者。
+- 结果与落点：[3.6-AC4/9](epics.md#s-3-6)、DP-07、FR-BOOK-01/05及NFR-01追溯；AC数97→98，仍21个Story。
+- 关联：D-014/019/021、ADR-004/005及“锁后新鲜取时、不增加提交截止”原规则；无新生产时钟/锁方案。
+- 验证与状态：C分别对创建/取消记录锁取得、数据库取时、写入/提交先后及独立终态；可控判定不能充真实PG，不能只凭sleep。当前新增测试设计待复核，尚未执行。
+- 证据分类：人工补充AI验收覆盖，不重计既有时间规则为新业务/架构决定，不虚报正向用例通过。
+
+<a id="d-045"></a>
+
+## D-045
+
+- 日期与阶段：需求负责人评审2026-11-23，B修订/补录2026-11-25；开发资料准备门槛澄清。
+- 主题：课程演示、一般开发和自动化可使用合规合成资料，真实个人资料仅约束按需真实导入。
+- AI初稿与问题：DP-03表将关闭点写为“真实账号/设备导入或真实演示前”，正文虽允许合成测试，但实际资料待提供状态仍可能被误读为一般开发/课程演示的前提；原文见[3515fc1的DP-03](https://github.com/doublej1943/lab-equipment-booking/blob/3515fc14c4abef6b4dc50664209fc918ddf94bb4/_bmad-output/planning-artifacts/development-readiness.md#L23)。
+- 人工意见/决定：[需求负责人第4项](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7081800080)确认手机号相关需求，明确课程演示及自动化可用符合约束的合成资料，不将真实个人数据作为一般开发必要前提。
+- B落实与取舍：DP-03区分合成数据准备与可选真实导入。B准备符合username/role/phone/code约束的合成集、C核验；只有需真实导入才由需求负责人私下提供并核查。无真实资料不阻断合成演示/开发/测试，也不能将合成资料称为真实归属已验证；真实数据仍不进Git/普通日志/截图。
+- 结果与落点：[development-readiness.md](development-readiness.md)DP-03门槛/状态/正文及审核包R-04；1.2初始化和测试继续按批准字段、失败回滚及合成数据约定执行。
+- 关联：FR-AUTH-01、NFR-03、D-023/024及课程演示用合成资料的已有架构边界；手机号必填/非唯一、权限和数据可见性均不改。
+- 验证与状态：使用范围已由需求负责人澄清，实际合成集/初始化工具/兼容和C验证未完成；只有真实导入的准备在未有资料时继续待办。当前文档表达修订待复核，无实际账号或数据导入结果。
+- 证据分类：执行前提的人工澄清与落实，不重新批准手机号需求、不新增产品能力、不将既有隐私约束重复计为新的架构决定。
+
+### 2026-11-25 复核补记（D-042、D-043）
+
+[C 的复核意见](https://github.com/doublej1943/lab-equipment-booking/pull/4#issuecomment-7158419208)指出，旧版4.4-AC5把全部端到端执行记录作为授权验收前提，导致真实故障注入进度影响NFR-03结论。B修订4.4-AC5、DP-10及追溯表，授权矩阵及配套回归、E2E-05真实故障、SM-02和SM-03分别按各自证据判定。此项文档修订待C确认，各项测试待执行。
