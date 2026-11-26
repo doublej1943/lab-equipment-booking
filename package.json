@@ -1,0 +1,9 @@
+{
+  "name": "labbooking-assets",
+  "private": true,
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.5",
+    "tailwindcss": "4.3.5",
+    "lucide-static": "1.80.0"
+  }
+}
