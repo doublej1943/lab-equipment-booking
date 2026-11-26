@@ -4,8 +4,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from secrets import token_urlsafe
-from urllib.error import HTTPError, URLError
+
+from urllib.error import URLError
 from urllib.request import ProxyHandler, build_opener
 
 import pytest
@@ -22,32 +22,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DEV = "LABBOOKING_DEV_DATABASE_URL"
 TEST = "LABBOOKING_TEST_DATABASE_URL"
 MIGRATION = "LABBOOKING_MIGRATION_DATABASE_URL"
-
-
-@pytest.fixture(scope="module")
-def databases():
-    import psycopg
-    from psycopg import sql
-    from tools.verify_runtime import temporary_postgres_cluster
-
-    with temporary_postgres_cluster() as admin:
-        with psycopg.connect(**admin.translate_connect_args(username="user", database="dbname"),
-                             autocommit=True) as conn:
-            roles = {}
-            for name in ("app_user", "migration_user"):
-                password = token_urlsafe(24)
-                conn.execute(sql.SQL("CREATE ROLE {} LOGIN PASSWORD {}").format(
-                    sql.Identifier(name), sql.Literal(password)))
-                roles[name] = admin.set(username=name, password=password)
-            for name in ("dev_db", "test_db"):
-                conn.execute(sql.SQL("CREATE DATABASE {} OWNER migration_user").format(sql.Identifier(name)))
-        yield {
-            "LABBOOKING_ENV": "test",
-            "LABBOOKING_SECRET_KEY": token_urlsafe(32),
-            DEV: roles["app_user"].set(database="dev_db").render_as_string(hide_password=False),
-            TEST: roles["app_user"].set(database="test_db").render_as_string(hide_password=False),
-            MIGRATION: roles["migration_user"].set(database="test_db").render_as_string(hide_password=False),
-        }
 
 
 def test_configuration_errors_are_safe(monkeypatch):
@@ -78,7 +52,7 @@ def test_request_sessions_and_database_isolation(databases):
     app = create_app(databases)
     assert app.testing and not app.debug
     assert set(app.blueprints) == {"auth", "devices", "bookings"}
-    assert not db.metadata.tables
+    assert set(db.metadata.tables) == {"users", "devices", "bookings"}
     sessions = []
 
     @app.get("/_test_probe")
@@ -131,7 +105,7 @@ def test_alembic_uses_only_the_selected_database(databases, monkeypatch):
             db.engine.dispose()
 
 
-def test_waitress_factory_starts_without_business_routes(databases):
+def test_waitress_factory_serves_login(databases):
     with socket.socket() as available:
         available.bind(("127.0.0.1", 0))
         port = available.getsockname()[1]
@@ -144,12 +118,9 @@ def test_waitress_factory_starts_without_business_routes(databases):
         while time.monotonic() < deadline:
             assert process.poll() is None, "Waitress exited before serving"
             try:
-                with opener.open(f"http://127.0.0.1:{port}/login", timeout=2):
-                    pytest.fail("Login is reserved for a later story")
-            except HTTPError as exc:
-                assert exc.code == 404
-                exc.close()
-                return
+                with opener.open(f"http://127.0.0.1:{port}/login", timeout=2) as response:
+                    assert response.status == 200 and b'csrf_token' in response.read()
+                    return
             except URLError:
                 time.sleep(0.1)
         pytest.fail("Waitress did not respond within 30 seconds")

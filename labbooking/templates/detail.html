@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}预约详情{% endblock %}
+{% block content %}<h1>{{ '协调详情' if role=='admin' else '预约详情' }}</h1>
+<section class="panel form-panel"><h2>{{ item.name }}</h2><p>{{ item.code }} · {{ item.location }} · {{ state(item.device_status) }}</p>
+<dl><dt>预约状态</dt><dd>{{ state(item.status) }}{% if item.ended %} · 时段已结束{% endif %}</dd><dt>日期 / 时段</dt><dd>{{ item.booking_date }} · {{ item.slot }}</dd>
+<dt>起止时间（上海）</dt><dd>{{ item.start_at|localtime }} – {{ item.end_at|localtime }}</dd>
+{% if role=='admin' %}<dt>预约人</dt><dd>{{ item.username }}</dd><dt>联系电话</dt><dd>{{ item.phone }}</dd>{% endif %}</dl>
+{% if item.can_cancel %}<form method="post" action="{{ url_for('bookings.cancel',booking_id=item.id) }}">{{ token() }}<button>取消预约</button></form>{% endif %}</section>{% endblock %}

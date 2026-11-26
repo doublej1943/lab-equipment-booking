@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block title %}登录{% endblock %}
+{% block content %}<section class="login panel"><h1>登录实验室</h1><p class="muted">使用预设账号查询设备和预约记录。</p>
+<form class="stack" method="post">{{ token() }}
+<label>账号<input name="username" autocomplete="username" required autofocus maxlength="64"></label>
+<label>密码<input name="password" type="password" autocomplete="current-password" required></label>
+<button>登录</button></form></section>{% endblock %}

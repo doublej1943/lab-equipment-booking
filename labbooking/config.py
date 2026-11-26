@@ -69,16 +69,27 @@ def flask_settings(overrides: Mapping | None):
             if overrides.get("LABBOOKING_ENV", profile) != profile:
                 raise ConfigurationError("TESTING and LABBOOKING_ENV disagree")
             settings["LABBOOKING_ENV"] = profile
+    cookie_mode = settings.get("LABBOOKING_TRANSPORT", "https")
+    if cookie_mode not in {"https", "local-http"}:
+        raise ConfigurationError("LABBOOKING_TRANSPORT must be https or local-http")
+    try:
+        pool_size = int(settings.get("LABBOOKING_POOL_SIZE", "5"))
+        if pool_size <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        raise ConfigurationError("LABBOOKING_POOL_SIZE must be a positive integer") from None
     return {
         "DEBUG": False,
+        "SESSION_COOKIE_SECURE": cookie_mode == "https",
         "SECRET_KEY": required(settings, "LABBOOKING_SECRET_KEY"),
         "SQLALCHEMY_DATABASE_URI": application_database(settings),
         "SQLALCHEMY_ENGINE_OPTIONS": {
             "isolation_level": "READ COMMITTED",
-            "pool_size": 5,
+            "pool_size": pool_size,
             "max_overflow": 0,
             "pool_timeout": 10,
             "hide_parameters": True,
+            "connect_args": {"connect_timeout": 10, "options": "-c lock_timeout=10s -c statement_timeout=30s"},
         },
         "TESTING": settings["LABBOOKING_ENV"] == "test",
     }
