@@ -31,7 +31,7 @@ def save(actor, data, device_id=None):
                    or data["status"] not in {"Available", "Disabled"}):
         raise Invalid("设备编号或状态无效。")
     with write_transaction("保存结果尚未确认，请查看设备列表核实。",
-                           unique_name="uq_devices_code", conflict=Conflict("设备编号已存在。")):
+                           unique_name="uq_devices_code", make_conflict=lambda: Conflict("设备编号已存在。")):
         if create:
             db.session.execute(insert(Device).values(**data))
         else:

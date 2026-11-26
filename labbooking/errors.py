@@ -43,7 +43,7 @@ def temporary_failure(error):
 
 
 @contextmanager
-def write_transaction(unknown_message, *, recovery="devices.catalog", booking_id=None, unique_name=None, conflict=None):
+def write_transaction(unknown_message, *, recovery="devices.catalog", booking_id=None, unique_name=None, make_conflict=None):
     committing = False
     try:
         yield
@@ -55,7 +55,7 @@ def write_transaction(unknown_message, *, recovery="devices.catalog", booking_id
         cause = error.orig
         if (unique_name and getattr(cause, "sqlstate", None) == "23505"
                 and getattr(cause.diag, "constraint_name", None) == unique_name):
-            raise conflict from None
+            raise make_conflict() from None
         raise
     except DBAPIError as error:
         code = getattr(error.orig, "sqlstate", None) or ""

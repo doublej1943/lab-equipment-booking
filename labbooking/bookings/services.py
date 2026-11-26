@@ -41,9 +41,12 @@ def availability(actor, device_id, day):
 def create(actor, device_id, day, slot):
     actor.require("user")
     start, end = snapshot(day, slot)
+
+    def occupied_slot():
+        return Occupied(f"设备 {device.code} 在 {day} 的 {slot} 时段已被预约。")
+
     with write_transaction("预约结果尚未确认，请先查看本人预约记录核实。", recovery="bookings.mine",
-                           unique_name="uq_bookings_confirmed_slot",
-                           conflict=Occupied(f"设备 #{device_id} 在 {day} 的 {slot} 时段已被预约。")):
+                           unique_name="uq_bookings_confirmed_slot", make_conflict=occupied_slot):
         device = device_row(device_id, lock=True)
         if device.status == "Disabled":
             raise Conflict("设备已停用。")

@@ -8,7 +8,12 @@ def test_core_booking_cycle(system):
     owner, token = lab.client("reader")
     other, second = lab.client("other")
     admin, admin_token = lab.client("manager")
-    device = lab.device()
+    code = "C-SCOPE-A"
+    created = admin.post("/admin/devices", data=dict(code=code, name="显微镜", location="A区",
+                                                     status="Available", csrf_token=admin_token))
+    assert created.status_code == 303
+    device = lab.rows("SELECT id FROM devices WHERE code=:code", code=code)[0]["id"]
+    assert code in owner.get("/devices").text
     day = future()
     url = f"/devices/{device}/availability"
     assert owner.get(url).status_code == 400
@@ -26,9 +31,16 @@ def test_core_booking_cycle(system):
     before = lab.rows("SELECT * FROM bookings WHERE id=:id", id=ident)[0]
     assert before["start_at"].astimezone(ZONE).strftime("%H:%M") == "08:00"
     assert before["end_at"].astimezone(ZONE).strftime("%H:%M") == "12:00"
-    conflict = other.post("/bookings", data={**form, "csrf_token": second})
-    assert conflict.status_code == 409 and "已被预约" in conflict.text and day in conflict.text
-    assert lab.phones["reader"] not in conflict.text
+    for client, csrf_token in ((owner, token), (other, second)):
+        conflict = client.post("/bookings", data={**form, "csrf_token": csrf_token})
+        assert conflict.status_code == 409
+        assert f"设备 {code} 在 {day} 的 AM 时段已被预约。" in conflict.text
+        assert f"设备 #{device}" not in conflict.text
+        for private in ("reader", "other", lab.phones["reader"], lab.phones["other"]):
+            assert private not in conflict.text
+        rows = lab.rows("SELECT * FROM bookings WHERE device_id=:device AND booking_date=:day AND slot='AM'",
+                        device=device, day=before["booking_date"])
+        assert rows == [before] and rows[0]["status"] == "Confirmed"
     assert other.post("/bookings", data={**form, "csrf_token": second, "slot": "PM"}).status_code == 303
     assert owner.post("/bookings", data={**form, "device_id": lab.device()}).status_code == 303
     assert "已占用" in owner.get(url, query_string={"date": day}).text
