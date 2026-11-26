@@ -1,14 +1,6 @@
-import json
-from datetime import datetime, timedelta
-from time import time
-
-import pytest
-from sqlalchemy import event, text
-from labbooking import create_app
 from labbooking.auth import routes as auth_routes
-from labbooking.extensions import db
 from labbooking.time_rules import ZONE
-from .support import csrf, future
+from .support import future
 
 
 def test_core_booking_cycle(system):
@@ -102,13 +94,17 @@ def test_authorization_and_csrf_matrix(system):
                   admin_path+"/affected-bookings","/admin"+own+"/coordination"]
     user_gets = ["/bookings",own]
     shared = ["/devices", f"/devices/{device}/availability?date={future()}"]
+    def denied(response, expected):
+        assert response.status_code == expected
+        for value in (*lab.phones.values(), *lab.passwords.values()):
+            assert value not in response.text
     for path in admin_gets + user_gets + shared:
-        assert anon.get(path).status_code == 302
+        denied(anon.get(path), 302)
         if path in admin_gets:
-            assert user.get(path).status_code == 403
+            denied(user.get(path), 403)
             assert admin.get(path).status_code == 200
         elif path in user_gets:
-            assert admin.get(path).status_code == 403
+            denied(admin.get(path), 403)
             assert user.get(path).status_code == 200
         else:
             assert user.get(path).status_code == admin.get(path).status_code == 200
@@ -119,13 +115,13 @@ def test_authorization_and_csrf_matrix(system):
     initial = snapshot()
     for path in user_posts + admin_posts + ["/login","/logout"]:
         for data in ({},{"csrf_token":"invalid"}):
-            assert user.post(path, data=data).status_code == 400
+            denied(user.post(path, data=data), 400)
         if path != "/login":
-            assert anon.post(path, data={"csrf_token":anonymous_token}).status_code == 401
+            denied(anon.post(path, data={"csrf_token":anonymous_token}), 401)
         if path in admin_posts:
-            assert user.post(path, data={"csrf_token":user_token,"role":"admin"}).status_code == 403
+            denied(user.post(path, data={"csrf_token":user_token,"role":"admin"}), 403)
         if path in user_posts:
-            assert admin.post(path, data={"csrf_token":admin_token}).status_code == 403
+            denied(admin.post(path, data={"csrf_token":admin_token}), 403)
     assert snapshot() == initial
     assert user.post("/logout", data={"csrf_token":user_token}).status_code == 303
     assert user.get("/devices").status_code == 302

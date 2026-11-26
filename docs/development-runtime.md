@@ -83,13 +83,9 @@ $env:LABBOOKING_PG_BIN = Join-Path $env:LOCALAPPDATA 'LabBookingPrep\edb-verifie
 
 记录提交号、Windows 版本、解释器路径、环境名、锁文件比对结果、数据库版本/排序规则/时区、两次 HTTP 校验、CSS/SVG 和密码正反例结果。如实记录失败步骤及修复。将记录附在开发准备 PR 即可。真实密码、哈希、数据库口令均无需提交。
 
-## Story 1.1 应用启动与验收
+## 启动完整应用
 
-在仓库根目录激活上述锁定环境。应用通过 `labbooking:create_app` 装配 Auth、Devices、Bookings，按所选环境建立 Flask-SQLAlchemy 扩展。当前访问 `/login` 返回 404；登录页面由 Story 1.3 实现。
-
-### 配置开发和测试数据库
-
-在本机 PostgreSQL 17.12 服务中准备两个不同名称的数据库，例如 `labbooking_dev` 与 `labbooking_test`。应用使用普通登录角色，迁移使用单独的角色。新服务可用管理账号在 psql 中运行以下初始化示例；密码通过 psql 的交互提示设置。下列命令面向新库，仅执行一次。
+从仓库根目录激活锁定环境。首次使用时，在 PostgreSQL 17.12 的 psql 管理会话中为开发、测试准备独立数据库并交互设置口令。
 
 ```sql
 CREATE ROLE labbooking_app LOGIN;
@@ -100,7 +96,7 @@ CREATE DATABASE labbooking_dev OWNER labbooking_migrator;
 CREATE DATABASE labbooking_test OWNER labbooking_migrator;
 ```
 
-连接串格式为 `postgresql+psycopg://用户名:编码后的口令@127.0.0.1:5432/库名`。口令里的特殊字符需按 URL 编码。下面使用当前 PowerShell 进程的私有环境变量，输入连接串时隐藏回显。开发库和测试库的名称用于隔离校验，切换测试环境时保留开发库配置作比对。
+连接串格式为 `postgresql+psycopg://用户名:编码后口令@127.0.0.1:5432/库名`。两个角色指向同一主机、端口和所选库。以下示例设置当前 PowerShell 会话，应用只需普通角色，迁移和初始化使用维护角色。
 
 ```powershell
 function Read-DatabaseUrl($prompt) {
@@ -108,30 +104,42 @@ function Read-DatabaseUrl($prompt) {
 }
 $env:LABBOOKING_ENV = 'development'
 $env:LABBOOKING_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
-$env:LABBOOKING_DEV_DATABASE_URL = Read-DatabaseUrl '开发库应用角色连接串'
+$env:LABBOOKING_DEV_DATABASE_URL = Read-DatabaseUrl '开发库普通角色连接串'
+$env:LABBOOKING_MIGRATION_DATABASE_URL = Read-DatabaseUrl '同一开发库的维护角色连接串'
+$env:LABBOOKING_TRANSPORT = 'local-http'
+python -m alembic upgrade head
+python -m alembic current
+```
+
+准备一个仅维护人员可读取的 UTF-8 JSON 文件，存放在仓库外。顶层为非空数组，每项有四个字符串字段：`username`、`password`、`phone`、`role`。角色可选 `user` 或 `admin`。用户名去首尾空白并转小写后须唯一。联系电话使用十一位手机号格式，可以重复。整批校验或写入失败时全部回滚。课程演示使用合成账号；真实名单通过需求负责人私下交付。
+
+```powershell
+$accountFile = Read-Host '输入私有账号 JSON 文件的完整路径'
+python -m flask --app labbooking:create_app init-users "$accountFile"
+if ($LASTEXITCODE -ne 0) { throw '账号初始化未完成，请核对后再启动' }
+Remove-Item Env:LABBOOKING_MIGRATION_DATABASE_URL
 python -m waitress --listen=127.0.0.1:8080 --call labbooking:create_app
 ```
 
-用 Ctrl+C 停止。保留同一会话的密钥可供重复启动使用。切换到测试库并检查迁移连接：
+打开 [本机登录页](http://127.0.0.1:8080/login)。管理员可在设备目录新增设备，普通用户可查询未来日期的上午或下午时段并提交预约。Ctrl+C 停止服务。私下保存部署密钥可让重启后的有效会话继续使用。
 
-```powershell
-$env:LABBOOKING_ENV = 'test'
-$env:LABBOOKING_TEST_DATABASE_URL = Read-DatabaseUrl '测试库应用角色连接串'
-$env:LABBOOKING_MIGRATION_DATABASE_URL = Read-DatabaseUrl '同一测试库的迁移角色连接串'
-python -m alembic current
-python -m alembic heads
-```
+- 本机回环 HTTP 显式设置 `local-http`。外部服务在 HTTPS 终止后使用默认 `https` 配置。会话固定两小时，Cookie 使用 HttpOnly、SameSite=Lax，HTTPS 启用 Secure。
+- 日常运行默认池上限 5，无额外连接，取连接最多等待 10 秒；数据库锁等待上限 10 秒，语句上限 30 秒。非功能验证使用单个 Waitress 进程、24 线程、`LABBOOKING_POOL_SIZE=24`、PostgreSQL 最大连接数 100。
+- 手工操作测试库时保留开发连接用于名称隔离检查，将 `LABBOOKING_ENV` 改为 `test`，设置 `LABBOOKING_TEST_DATABASE_URL` 和指向同一测试库的维护连接。应用、迁移和账号初始化分别检查目标库与角色。
+- 在已有库执行迁移前，由维护人员创建并验证 PostgreSQL 备份。版本 0002 仅授予业务所需表和列权限，回到 0001 会收回业务表权限并保留数据。0001 的回退使用已复核备份，在隔离库恢复并比对历史后再切换。
 
-应用按需打开数据库连接，建立物理连接时核对数据库名称、角色及服务端主版本。测试库与开发库同名时，配置解析立即失败，包括主机别名和不同账号指向同名库的情形。Alembic 的连接必须与当前应用连接具有相同主机、端口、库名及不同角色。版本目录在首次业务模型交付时添加第一条迁移。本地单进程连接池上限为 5，额外连接数为 0，取连接最长等待 10 秒。正式并发验收时按 DP-09 校准。每次请求结束由 Flask-SQLAlchemy 清理 Session。
+## 一次运行全部验证
 
-### C 的 Story 验收命令
-
-设置 `LABBOOKING_PG_BIN` 为已校验的 EDB 发行包 bin 目录后运行：
+设置上文的 `LABBOOKING_PG_BIN` 后执行。测试会自行启动和停止隔离的 PostgreSQL 实例，生成两个临时库、两种数据库角色及合成账号。
 
 ```powershell
 git rev-parse HEAD
+$env:LABBOOKING_EVIDENCE_DIR = Join-Path $env:TEMP ('labbooking-evidence-' + [guid]::NewGuid())
 python -m tools.verify_runtime
-python -m pytest -q tests/test_app_foundation.py
+if ($LASTEXITCODE -ne 0) { throw '运行环境验证失败' }
+python -m pytest -q tests --tb=short
+if ($LASTEXITCODE -ne 0) { throw '业务自测出现失败' }
+Get-ChildItem -LiteralPath $env:LABBOOKING_EVIDENCE_DIR
 ```
 
-测试自动创建临时 PostgreSQL 集群、普通应用角色、迁移角色和两个数据库。覆盖缺失配置的脱敏错误、应用及迁移误指开发库、首次连接与复用连接的隔离级别、跨请求事务清理、Alembic 版本表仅出现在测试库，以及实际 Waitress 工厂入口的 HTTP 响应。测试结束时停止临时服务并清理数据。
+PR 的 Windows 检查运行同一组命令，并在 `booking-evidence` 中保留请求样本和故障结果。[四个 Epic 的验收对照](acceptance.md)

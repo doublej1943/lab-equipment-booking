@@ -1,12 +1,12 @@
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from flask import before_render_template, template_rendered
 from sqlalchemy import event, text
 from sqlalchemy.exc import OperationalError
 from labbooking import create_app
 from labbooking.bookings import services
 from labbooking.extensions import db
-from labbooking.time_rules import ZONE, snapshot
+from labbooking.time_rules import snapshot
 from .support import future
 
 
@@ -51,7 +51,7 @@ def test_filters_pagination_and_history(system):
         cancelled = seed(device, day, "Cancelled","reader")
         first = seed(device, day, "Confirmed","reader")
         later = seed(device, day + timedelta(days=1), "Confirmed","other")
-        elsewhere = seed(other_device, day, "Confirmed","reader")
+        seed(other_device, day, "Confirmed","reader")
     def ids(url):
         page = admin.get(url)
         assert page.status_code == 200 and lab.phones["reader"] not in page.text

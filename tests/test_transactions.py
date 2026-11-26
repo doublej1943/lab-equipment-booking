@@ -1,13 +1,12 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, timedelta
+from datetime import timedelta
 from threading import Event
 
 import pytest
 from sqlalchemy import text
 from labbooking.bookings import services
 from labbooking.extensions import db
-from labbooking.time_rules import snapshot
 from .support import future
 from .test_load import evidence
 
@@ -110,9 +109,16 @@ def test_disable_wins_or_rolls_back(system, commit):
         gate.execute(text("UPDATE devices SET status='Disabled' WHERE id=:id"), {"id":device})
         job = workers.submit(uri, client, token, device)
         wait_for_lock(lab, "FOR SHARE")
-        gate.commit() if commit else gate.rollback()
-        assert job.result(timeout=10).status_code == (409 if commit else 303)
-    assert len(state(lab, device)) == (0 if commit else 1)
+        if commit:
+            gate.commit()
+        else:
+            gate.rollback()
+        status = job.result(timeout=10).status_code
+        assert status == (409 if commit else 303)
+    final = [r["status"] for r in state(lab, device)]
+    assert final == ([] if commit else ["Confirmed"])
+    evidence(f"disable-create-{commit}", dict(device=device, observed_wait="FOR SHARE",
+             disable_committed=commit, original_http=status, final=final))
 
 
 @pytest.mark.parametrize("commit", [True, False])
@@ -130,14 +136,20 @@ def test_pending_cancellation(system, commit, second):
         else:
             job = workers.submit(uri, client, token, device)
             wait_for_lock(lab, "INSERT INTO bookings")
-        gate.commit() if commit else gate.rollback()
+        if commit:
+            gate.commit()
+        else:
+            gate.rollback()
         succeeds = commit if second == "create" else not commit
-        assert job.result(timeout=10).status_code == (303 if succeeds else 409)
+        status = job.result(timeout=10).status_code
+        assert status == (303 if succeeds else 409)
     statuses = [r["status"] for r in state(lab, device)]
     if second == "cancel":
         assert statuses == ["Cancelled"]
     else:
         assert statuses == (["Cancelled","Confirmed"] if commit else ["Confirmed"])
+    evidence(f"pending-cancel-{second}-{commit}", dict(device=device, second=second,
+             observed_wait=True, cancel_committed=commit, original_http=status, final=statuses))
 
 
 @pytest.mark.parametrize("commit", [True, False])
@@ -168,9 +180,13 @@ def test_shared_device_lock_and_pending_disable(system, monkeypatch, commit):
             wait_for_lock(lab, "UPDATE devices")
         finally:
             release.set()
-        assert first_job.result().status_code == (303 if commit else 409)
-        assert disable.result().status_code == 303
-    assert len(state(lab, device)) == (2 if commit else 1)
+        first_status = first_job.result().status_code
+        disable_status = disable.result().status_code
+        assert first_status == (303 if commit else 409) and disable_status == 303
+    final = [r["status"] for r in state(lab, device)]
+    assert final == ["Confirmed"] * (2 if commit else 1)
+    evidence(f"create-disable-{commit}", dict(device=device, observed_wait="UPDATE devices",
+             first_http=first_status, different_slot_http=303, disable_http=disable_status, final=final))
 
 
 @pytest.mark.parametrize("operation", ["create", "cancel"])

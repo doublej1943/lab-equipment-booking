@@ -11,7 +11,6 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.orm import Session
 from labbooking.auth.models import User
 from labbooking.devices.models import Device
-from labbooking.extensions import db
 from labbooking.time_rules import snapshot
 from .support import accounts
 
@@ -20,7 +19,7 @@ def test_history_survives_migrations_and_role_changes(databases, monkeypatch):
     for key, value in databases.items():
         monkeypatch.setenv(key, value)
     cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
-    command.upgrade(cfg, "0001")
+    command.upgrade(cfg, "0000")
     engine = create_engine(databases["LABBOOKING_MIGRATION_DATABASE_URL"])
     runtime = create_engine(databases["LABBOOKING_TEST_DATABASE_URL"])
     try:
@@ -28,6 +27,9 @@ def test_history_survives_migrations_and_role_changes(databases, monkeypatch):
             conn.execute(text("INSERT INTO users(username,password_hash,role,phone) "
                               "VALUES ('historical','unusable','user',:phone)"), {"phone":accounts()[1]["reader"]})
             conn.execute(text("INSERT INTO devices(code,name,location,status) VALUES ('H','旧设备','旧址','Disabled')"))
+        command.upgrade(cfg, "0001")
+        with engine.begin() as conn:
+            assert conn.execute(text("SELECT username,code FROM users CROSS JOIN devices")).one() == ("historical","H")
             for day, status in ((date(2020,1,1), "Confirmed"), (date(2035,1,1), "Cancelled"),
                                 (date(2035,1,1), "Confirmed")):
                 start, end = snapshot(day, "AM")
@@ -39,6 +41,25 @@ def test_history_survives_migrations_and_role_changes(databases, monkeypatch):
                 return [conn.execute(text(f"SELECT * FROM {table} ORDER BY id")).all()
                         for table in ("users","devices","bookings")]
         original = contents()
+        with engine.connect() as conn:
+            columns = conn.execute(text("SELECT column_name,is_nullable,column_default FROM information_schema.columns "
+                "WHERE table_schema='public' AND table_name='bookings' ORDER BY ordinal_position")).all()
+            assert [c.column_name for c in columns] == ["id","user_id","device_id","booking_date","slot","status","start_at","end_at"]
+            assert all(c.is_nullable == "NO" and c.column_default is None for c in columns)
+            for assignment, sqlstate in (("slot='XX'", "23514"), ("status='Completed'", "23514"),
+                                        ("start_at=end_at", "23514"), ("user_id=-1", "23503"),
+                                        ("device_id=-1", "23503")):
+                with pytest.raises(IntegrityError) as error:
+                    conn.execute(text(f"UPDATE bookings SET {assignment} WHERE id=1"))
+                assert error.value.orig.sqlstate == sqlstate
+                conn.rollback()
+            fields = "user_id,device_id,booking_date,slot,status,start_at,end_at"
+            with pytest.raises(IntegrityError) as duplicate:
+                conn.execute(text(f"INSERT INTO bookings({fields}) SELECT {fields} FROM bookings WHERE id=1"))
+            assert duplicate.value.orig.diag.constraint_name == "uq_bookings_confirmed_slot"
+            conn.rollback()
+            conn.execute(text(f"INSERT INTO bookings({fields}) SELECT {fields} FROM bookings WHERE status='Cancelled'"))
+            conn.rollback()
         for target in ("head", "0001", "head"):
             if target == "head":
                 command.upgrade(cfg, target)
