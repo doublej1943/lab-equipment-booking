@@ -82,3 +82,56 @@ $env:LABBOOKING_PG_BIN = Join-Path $env:LOCALAPPDATA 'LabBookingPrep\edb-verifie
 ## 交给 C 的记录
 
 记录提交号、Windows 版本、解释器路径、环境名、锁文件比对结果、数据库版本/排序规则/时区、两次 HTTP 校验、CSS/SVG 和密码正反例结果。如实记录失败步骤及修复。将记录附在开发准备 PR 即可。真实密码、哈希、数据库口令均无需提交。
+
+## Story 1.1 应用启动与验收
+
+在仓库根目录激活上述锁定环境。应用通过 `labbooking:create_app` 装配 Auth、Devices、Bookings，按所选环境建立 Flask-SQLAlchemy 扩展。当前访问 `/login` 返回 404；登录页面由 Story 1.3 实现。
+
+### 配置开发和测试数据库
+
+在本机 PostgreSQL 17.12 服务中准备两个不同名称的数据库，例如 `labbooking_dev` 与 `labbooking_test`。应用使用普通登录角色，迁移使用单独的角色。新服务可用管理账号在 psql 中运行以下初始化示例；密码通过 psql 的交互提示设置。下列命令面向新库，仅执行一次。
+
+```sql
+CREATE ROLE labbooking_app LOGIN;
+CREATE ROLE labbooking_migrator LOGIN;
+\password labbooking_app
+\password labbooking_migrator
+CREATE DATABASE labbooking_dev OWNER labbooking_migrator;
+CREATE DATABASE labbooking_test OWNER labbooking_migrator;
+```
+
+连接串格式为 `postgresql+psycopg://用户名:编码后的口令@127.0.0.1:5432/库名`。口令里的特殊字符需按 URL 编码。下面使用当前 PowerShell 进程的私有环境变量，输入连接串时隐藏回显。开发库和测试库的名称用于隔离校验，切换测试环境时保留开发库配置作比对。
+
+```powershell
+function Read-DatabaseUrl($prompt) {
+    [System.Net.NetworkCredential]::new('', (Read-Host $prompt -AsSecureString)).Password
+}
+$env:LABBOOKING_ENV = 'development'
+$env:LABBOOKING_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$env:LABBOOKING_DEV_DATABASE_URL = Read-DatabaseUrl '开发库应用角色连接串'
+python -m waitress --listen=127.0.0.1:8080 --call labbooking:create_app
+```
+
+用 Ctrl+C 停止。保留同一会话的密钥可供重复启动使用。切换到测试库并检查迁移连接：
+
+```powershell
+$env:LABBOOKING_ENV = 'test'
+$env:LABBOOKING_TEST_DATABASE_URL = Read-DatabaseUrl '测试库应用角色连接串'
+$env:LABBOOKING_MIGRATION_DATABASE_URL = Read-DatabaseUrl '同一测试库的迁移角色连接串'
+python -m alembic current
+python -m alembic heads
+```
+
+应用按需打开数据库连接，建立物理连接时核对数据库名称、角色及服务端主版本。测试库与开发库同名时，配置解析立即失败，包括主机别名和不同账号指向同名库的情形。Alembic 的连接必须与当前应用连接具有相同主机、端口、库名及不同角色。版本目录在首次业务模型交付时添加第一条迁移。本地单进程连接池上限为 5，额外连接数为 0，取连接最长等待 10 秒。正式并发验收时按 DP-09 校准。每次请求结束由 Flask-SQLAlchemy 清理 Session。
+
+### C 的 Story 验收命令
+
+设置 `LABBOOKING_PG_BIN` 为已校验的 EDB 发行包 bin 目录后运行：
+
+```powershell
+git rev-parse HEAD
+python -m tools.verify_runtime
+python -m pytest -q tests/test_app_foundation.py
+```
+
+测试自动创建临时 PostgreSQL 集群、普通应用角色、迁移角色和两个数据库。覆盖缺失配置的脱敏错误、应用及迁移误指开发库、首次连接与复用连接的隔离级别、跨请求事务清理、Alembic 版本表仅出现在测试库，以及实际 Waitress 工厂入口的 HTTP 响应。测试结束时停止临时服务并清理数据。

@@ -59,7 +59,7 @@ def password_probe():
 
 
 @contextmanager
-def temporary_postgres():
+def temporary_postgres_cluster():
     pg_bin = Path(os.environ["LABBOOKING_PG_BIN"]).resolve(strict=True)
     with TemporaryDirectory(prefix="labbooking-dp01-") as directory:
         base = Path(directory)
@@ -80,16 +80,21 @@ def temporary_postgres():
         run([pg_bin / "pg_ctl.exe", "-D", data, "-l", str(base / "postgres.log"), "-o", server_args,
              "-w", "start"], cwd=base, check=True)
         try:
-            password = token_urlsafe(32)
-            with psycopg.connect(host="127.0.0.1", port=port, dbname="postgres",
-                                 user="prep_admin", password=admin_secret) as conn:
-                conn.execute(sql.SQL("CREATE ROLE prep_reader LOGIN PASSWORD {}").format(
-                    sql.Literal(password)))
-            yield URL.create("postgresql+psycopg", username="prep_reader", password=password,
+            yield URL.create("postgresql+psycopg", username="prep_admin", password=admin_secret,
                              host="127.0.0.1", port=port, database="postgres")
         finally:
             run([pg_bin / "pg_ctl.exe", "-D", data, "-m", "fast", "-w", "stop"],
                 cwd=base, check=True)
+
+
+@contextmanager
+def temporary_postgres():
+    with temporary_postgres_cluster() as admin:
+        password = token_urlsafe(32)
+        with psycopg.connect(**admin.translate_connect_args(username="user", database="dbname")) as conn:
+            conn.execute(sql.SQL("CREATE ROLE prep_reader LOGIN PASSWORD {}").format(
+                sql.Literal(password)))
+        yield admin.set(username="prep_reader", password=password)
 
 
 def runtime_probe(url):
